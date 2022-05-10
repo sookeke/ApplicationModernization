@@ -7,7 +7,6 @@ This sample demonstrates how to modernize 10+ year-old Java EE applications with
 ### Project Structure
 
 * [Demonstrated Capabilities, Technologies and Tools](#demonstrated-capabilities-technologies-and-tools)
-* [Introduction Video (12 mins)](#introduction-video)
 * [Session Recording: Application Modernization and Rabbits (30 mins)](http://heidloff.net/article/webinar-recording-application-modernization-and-rabbits/)
 * [Architecture](#architecture)
 * [Documentation](#documentation)
