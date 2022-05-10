@@ -1,0 +1,34 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: service-catalog-quarkus-reactive-argocd-pr
+spec:
+  serviceAccountName: pipeline
+  pipelineRef:
+    name: service-catalog-quarkus-reactive-argocd
+  workspaces:
+  - name: app-source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  - name: config-source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  params:
+  - name: app-git-url
+    value: git@github.com:ibm/application-modernization-javaee-quarkus.git
+  - name: config-git-url
+    value: 'git@github.com:<your-github-name>/application-modernization-javaee-quarkus-config.git'
+  - name: project-name-prefix
+    value: app-mod-argocd-
+  - name: build-revision
+    value: ''

@@ -1,0 +1,21 @@
+version: '3.5'
+
+networks:
+  default:
+    external:
+      name: store-front-network
+
+services:
+    storefront-db2:        
+        image: storefront-db2
+        container_name: storefront-db2
+        privileged: true
+        ports:
+          - "5000:5000"
+          - "50000:50000"
+          - "60000:60000"
+        environment:
+          - LICENSE=accept
+          - DB2INST1_PASSWORD=db2inst1
+          - DBNAME=orderdb
+        restart: always

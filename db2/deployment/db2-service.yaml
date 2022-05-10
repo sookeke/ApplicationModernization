@@ -1,0 +1,21 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: storefront-db2
+  namespace: 5b7aa5-dev
+  labels:
+    app: storefront-db2
+spec:
+  ports:
+    - name: 50000-tcp
+      protocol: TCP
+      port: 50000
+      targetPort: 50000
+  selector:
+    app: storefront-db2
+    deploymentconfig: storefront-db2
+  type: ClusterIP
+  sessionAffinity: None
+status:
+  loadBalancer: {}
+

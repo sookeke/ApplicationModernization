@@ -1,0 +1,35 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: prep-service-catalog-quarkus-reactive-argocd
+  labels:
+    app.kubernetes.io/version: "0.3"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.21.0"
+    tekton.dev/displayName: "prep-service-catalog-quarkus-reactive"
+spec:
+  description: >-
+    prep-service-catalog-quarkus-reactive-argocd
+  workspaces:
+    - name: app-source
+      description: app-source
+  params:
+  - name: project-name-prefix
+    description: project-name-prefix
+  steps:
+    - name: prep-service-catalog-quarkus-reactive-argocd
+      image: image-registry.openshift-image-registry.svc:5000/openshift/cli
+      script: |
+        #!/bin/bash
+        oc project $(params.project-name-prefix)dev
+
+        oc delete deployment service-catalog-quarkus-reactive --ignore-not-found
+        oc delete service service-catalog-quarkus-reactive --ignore-not-found
+        oc delete route service-catalog-quarkus-reactive --ignore-not-found
+        oc delete bc/build-service-catalog-quarkus-reactive --ignore-not-found
+        echo "Done deleting resources"
+
+        cd $(workspaces.app-source.path)/service-catalog-quarkus-reactive/src/main/resources
+        rm application.properties
+        cp application-openshift.properties application.properties
+        echo "Done changing links in application.properties"

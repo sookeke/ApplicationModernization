@@ -1,0 +1,44 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: tag-image
+spec:
+  params:
+  - name: project-name-prefix
+  - name: image
+  workspaces:
+  - name: app-source
+  steps:
+  - name: tag-image
+    image: quay.io/buildah/stable:v1.17.0
+    workingDir: "$(workspaces.app-source.path)/"
+    script: |
+      #!/usr/bin/env sh
+      set -e
+      source $(workspaces.app-source.path)/revision.txt
+      echo REVISION: $REVISION
+      echo image: $(params.image)
+
+      echo Tagging dev image
+      buildah pull --tls-verify=false docker://$(params.image)
+      buildah tag docker://$(params.image) docker://$(params.image):$REVISION
+      buildah push --tls-verify=false docker://$(params.image):$REVISION
+
+      echo Tagging test image
+      TEST_IMAGE=image-registry.openshift-image-registry.svc:5000/app-mod-argocd-test/build-service-catalog-quarkus-reactive
+      buildah tag docker://$(params.image):$REVISION docker://$TEST_IMAGE:$REVISION
+      buildah push --tls-verify=false docker://$TEST_IMAGE:$REVISION
+
+      echo Tagging prod image
+      PROD_IMAGE=image-registry.openshift-image-registry.svc:5000/app-mod-argocd-prod/build-service-catalog-quarkus-reactive
+      buildah tag docker://$(params.image):$REVISION docker://$PROD_IMAGE:$REVISION
+      buildah push --tls-verify=false docker://$PROD_IMAGE:$REVISION
+    volumeMounts:
+    - name: varlibcontainers
+      mountPath: /var/lib/containers
+    securityContext:
+      privileged: true
+  volumes:
+  - name: varlibcontainers
+    emptyDir: {}
+---

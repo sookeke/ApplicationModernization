@@ -1,0 +1,188 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: service-catalog-quarkus-reactive-argocd
+spec:
+  description: |
+    service-catalog-quarkus-reactive-argocd
+  params:
+  - name: app-git-url
+    type: string
+    description: The application repository
+  - name: config-git-url
+    description: The application config (GitOps) repository
+  - name: project-name-prefix
+    type: string
+    description: The prefix of the target projects
+  - name: build-revision
+    description: The revision of the build
+  workspaces:
+  - name: app-source
+  - name: config-source
+  tasks:
+  - name: git-checkout
+    taskRef:
+      name: git-checkout
+    workspaces:
+    - name: app-source
+      workspace: app-source
+    - name: config-source
+      workspace: config-source
+    params:
+    - name: app-git-url
+      value: $(params.app-git-url)
+    - name: config-git-url
+      value: $(params.config-git-url)
+    - name: build-revision
+      value: $(params.build-revision) 
+  - name: wait-for-infra
+    taskRef:
+      name: wait-for-infrastructure
+    workspaces:
+    - name: source
+      workspace: app-source
+    runAfter: ["git-checkout"] 
+    params:
+    - name: project-name
+      value: $(params.project-name-prefix)
+  - name: configure
+    taskRef:
+      name: prep-service-catalog-quarkus-reactive-argocd
+    workspaces:
+    - name: app-source
+      workspace: app-source
+    runAfter: ["wait-for-infra"] 
+    params:
+    - name: project-name-prefix
+      value: $(params.project-name-prefix)
+  - name: static-test
+    taskRef:
+      name: static-test
+    runAfter: ["configure"]
+  - name: build-and-unit-test
+    taskRef:
+      name: build-and-unit-test
+    runAfter: ["static-test"]      
+  - name: build-and-push-image
+    taskRef:
+      name: buildah
+    workspaces:
+    - name: source
+      workspace: app-source
+    params:
+    - name: IMAGE
+      value: image-registry.openshift-image-registry.svc:5000/$(params.project-name-prefix)dev/build-service-catalog-quarkus-reactive
+    - name: CONTEXT
+      value: $(workspaces.source.path)/service-catalog-quarkus-reactive
+    - name: TLSVERIFY
+      value: "false"
+    runAfter: ["build-and-unit-test"] 
+  - name: tag-image
+    taskRef:
+      name: tag-image
+    workspaces:
+    - name: app-source
+      workspace: app-source
+    runAfter: ["build-and-push-image"] 
+    params:
+    - name: project-name-prefix
+      value: $(params.project-name-prefix)
+    - name: image
+      value: image-registry.openshift-image-registry.svc:5000/$(params.project-name-prefix)dev/build-service-catalog-quarkus-reactive
+  - name: update-gitops-repo-dev
+    taskRef:
+      name: update-gitops-repo
+    workspaces:
+    - name: app-source
+      workspace: app-source
+    - name: config-source
+      workspace: config-source
+    runAfter: ["tag-image"] 
+    params:
+    - name: project-name-prefix
+      value: $(params.project-name-prefix)
+    - name: environment
+      value: dev
+    - name: argo-app-name
+      value: app-dev
+    - name: config-git-url
+      value: $(params.config-git-url)
+    - name: app-git-url
+      value: $(params.app-git-url)
+  - name: trigger-argocd-dev
+    taskRef:
+      name: trigger-argocd
+    runAfter: ["update-gitops-repo-dev"] 
+    params:
+    - name: argo-app-name
+      value: app-dev
+  - name: smoke-test
+    taskRef:
+      name: smoke-test
+    runAfter: ["trigger-argocd-dev"]
+  - name: update-gitops-repo-test
+    taskRef:
+      name: update-gitops-repo
+    workspaces:
+    - name: app-source
+      workspace: app-source
+    - name: config-source
+      workspace: config-source
+    runAfter: ["smoke-test"] 
+    params:
+    - name: project-name-prefix
+      value: $(params.project-name-prefix)
+    - name: environment
+      value: test
+    - name: argo-app-name
+      value: app-test
+    - name: config-git-url
+      value: $(params.config-git-url)
+    - name: app-git-url
+      value: $(params.app-git-url)
+  - name: trigger-argocd-test
+    taskRef:
+      name: trigger-argocd
+    runAfter: ["update-gitops-repo-test"] 
+    params:
+    - name: argo-app-name
+      value: app-test
+  - name: deploy-system-test
+    taskRef:
+      name: deploy-system-test
+    runAfter: ["trigger-argocd-test"]
+  - name: run-system-test
+    taskRef:
+      name: run-system-test
+    runAfter: ["deploy-system-test"]
+  - name: update-gitops-repo-prod
+    taskRef:
+      name: update-gitops-repo-prod
+    workspaces:
+    - name: app-source
+      workspace: app-source
+    - name: config-source
+      workspace: config-source
+    runAfter: ["run-system-test"] 
+    params:
+    - name: project-name-prefix
+      value: $(params.project-name-prefix)
+    - name: environment
+      value: prod
+    - name: argo-app-name
+      value: app-prod
+    - name: config-git-url
+      value: $(params.config-git-url
+    - name: app-git-url
+      value: $(params.app-git-url)
+  - name: trigger-argocd-prod
+    taskRef:
+      name: trigger-argocd
+    runAfter: ["update-gitops-repo-prod"] 
+    params:
+    - name: argo-app-name
+      value: app-prod
+  - name: smoke-test-prod
+    taskRef:
+      name: smoke-test-prod
+    runAfter: ["trigger-argocd-prod"]

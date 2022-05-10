@@ -1,0 +1,42 @@
+kind: Template
+apiVersion: v1
+metadata:
+  name: pods-reader
+  annotations:
+    openshift.io/display-name: Pod reader rolebinding
+    description: Allow default user to read pod's log.
+    tags: pims-logging
+parameters:
+  - name: NAMESPACE
+    description: Target namespace
+    displayName: Target Namespace
+    required: true
+    value: "5b7aa5-dev"
+objects:
+  - kind: Role
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: use-scc-db2
+      namespace: ${NAMESPACE}
+    rules:
+      - apiGroups: ["security.openshift.io"]
+        resources: ["securitycontextcontraints"]
+        resourceNames: ["scc-db2]
+        verbs: ["use"]
+      - apiGroups: ["extensions"]
+        resources: ["deployments"]
+        verbs: ["get", "list", "watch"]
+
+  - kind: RoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: use-scc-db2
+      namespace: ${NAMESPACE}
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: use-scc-db2
+    subjects:
+      - kind: ServiceAccount
+        name: mysvcacct
+        namespace: ${NAMESPACE}
