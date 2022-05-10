@@ -10,9 +10,9 @@ This sample demonstrates how to modernize 10+ year-old Java EE applications with
 * [Architecture](#architecture)
 * [Documentation](#documentation)
 * [Deployment via Docker Desktop](#deployment-via-docker-desktop)
-* [Deployment to OpenShift on IBM Cloud with Tekton](#deployment-to-openshift-on-ibm-cloud-with-tekton)
-* [Deployment to OpenShift on IBM Cloud with Tekton and ArgoCD](documentation/Deployments.md#deployment-to-openshift-on-ibm-cloud-with-tekton-and-argocd)
-* [Deployment to OpenShift on IBM Cloud with local Scripts](documentation/Deployments.md#deployment-to-openshift-on-ibm-cloud-with-local-scripts)
+* [Deployment to OpenShift with Tekton](#deployment-to-openshift-on-ibm-cloud-with-tekton)
+* [Deployment to OpenShift with Tekton and ArgoCD](documentation/Deployments.md#deployment-to-openshift-on-ibm-cloud-with-tekton-and-argocd)
+* [Deployment to OpenShift with local Scripts](documentation/Deployments.md#deployment-to-openshift-on-ibm-cloud-with-local-scripts)
 * [More Deployment Options](documentation/Deployments.md)
 
 
@@ -154,7 +154,7 @@ Once everything has been started, you can open the web applications:
 See the [documentation](documentation/RunDemo.md) how to run the demo.
 
 
-### Deployment to OpenShift on IBM Cloud with Tekton
+### Deployment to OpenShift with Tekton
 
 Additionally you need to install Tekton. The easiest option is to use the '[OpenShift Pipelines](https://docs.openshift.com/container-platform/4.6/pipelines/installing-pipelines.html)' operator from the OperatorHub view in the OpenShift Console ([screenshots](documentation/deploy-tekton-1.png)). Simply accept all defaults. No local installations are necessary.
 
